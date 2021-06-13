@@ -12,9 +12,6 @@ const char *handleAdd(char *addCmd, struct Locations *loc)
 {
     int X, Y;
 
-    if (loc->currOccupancy >= 50)
-        return "limit exceeded";
-
     char *coordX = strtok(NULL, " ");
     X = parseInt(coordX);
     if (X < 0 || X > 9999)
@@ -28,6 +25,9 @@ const char *handleAdd(char *addCmd, struct Locations *loc)
     char *end = strtok(NULL, " "); // additional invalid parts in add command
     if (end != NULL)
         return "error";
+
+    if (loc->currOccupancy >= 50)
+        return "limit exceeded";
 
     if (elementAlreadyRegistered(X, Y, loc) != -1)
         return writeReturnMessage(coordX, coordY, "already exists");
@@ -104,6 +104,7 @@ const char *handleRemove(char *addCmd, struct Locations *loc)
     return writeReturnMessage(coordX, coordY, "removed");
 }
 
+// handleQuery handles the 'query X Y' command
 const char *handleQuery(char *addCmd, struct Locations *loc)
 {
     int X, Y;
@@ -121,6 +122,9 @@ const char *handleQuery(char *addCmd, struct Locations *loc)
     char *end = strtok(NULL, " "); // additional invalid parts in add command
     if (end != NULL)
         return "error";
+
+    if (loc->currOccupancy == 0)
+        return "none";
 
     float minDistance = 14141.0; // bigger than max dist possible (from 0,0 to 9999,9999)
     float currDist;
@@ -171,7 +175,7 @@ const char *handleCommand(char *msg, struct Locations *loc)
     }
     else
     {
-        return "invalid command";
+        return "error";
     }
 
     return cmdReturn;

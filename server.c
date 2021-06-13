@@ -30,7 +30,7 @@ int listenToClient(int csock)
     {
         bzero(buf, BUFSZ);
         size_t count = recv(csock, buf, BUFSZ - 1, 0);
-        printf("[log] received: %s\n", buf);
+        printf("[log] received: %s", buf);
 
         if (buf == NULL ||
             ((strlen(buf) == 5) && (strcmp(buf, "exit\n") == 0))) // last char is '\n'
@@ -43,7 +43,6 @@ int listenToClient(int csock)
         }
 
         cmdReturn = handleCommand(buf, &locs);
-        // TODO: handle invalid command
 
         sprintf(buf, "< %s", cmdReturn);
         count = send(csock, buf, strlen(buf) + 1, 0);
@@ -51,6 +50,9 @@ int listenToClient(int csock)
         {
             logexit("send");
         }
+
+        if (strcmp(cmdReturn, "error") == 0)
+            break;
     }
 
     return kill;

@@ -44,6 +44,9 @@ void runClient(int sfd)
 		bzero(buf, BUFSZ); // resets buffer
 		read(sfd, buf, sizeof(buf));
 		printf("%s\n", buf);
+
+		if (strcmp(buf, "< error") == 0)
+			break;
 	};
 }
 
