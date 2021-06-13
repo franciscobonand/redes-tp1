@@ -1,5 +1,5 @@
 #include "common.h"
-#include "utils.c"
+#include "handlers.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,10 +30,10 @@ int listenToClient(int csock)
     {
         bzero(buf, BUFSZ);
         size_t count = recv(csock, buf, BUFSZ - 1, 0);
-        cmdReturn = handleCommand(buf, &locs);
-        // TODO: handle invalid command
+        printf("[log] received: %s\n", buf);
 
-        if ((strlen(buf) == 5) && (strcmp(buf, "exit\n") == 0)) // last char is '\n'
+        if (buf == NULL ||
+            ((strlen(buf) == 5) && (strcmp(buf, "exit\n") == 0))) // last char is '\n'
             break;
 
         if ((strlen(buf) == 5) && (strcmp(buf, "kill\n") == 0)) // last char is '\n'
@@ -42,7 +42,10 @@ int listenToClient(int csock)
             break;
         }
 
-        sprintf(buf, "< trallaal");
+        cmdReturn = handleCommand(buf, &locs);
+        // TODO: handle invalid command
+
+        sprintf(buf, "< %s", cmdReturn);
         count = send(csock, buf, strlen(buf) + 1, 0);
         if (count != strlen(buf) + 1)
         {
@@ -94,7 +97,8 @@ int main(int argc, char **argv)
     printf("bound to %s, waiting connections\n", addrstr);
 
     // sets the current list of locations to length 0
-    locs.currOcupation = 0;
+    locs.currOccupancy = 0;
+    // TODO: initialize all array elements with -1 -1
 
     while (1)
     {

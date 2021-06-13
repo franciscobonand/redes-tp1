@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #define BUFSZ 500
 
@@ -13,92 +14,54 @@ struct Coordinates
 
 struct Locations
 {
-    int currOcupation;
+    int currOccupancy;
     struct Coordinates points[50];
 };
 
-int parseInt(char *str, int *val)
+int parseInt(char *str)
 {
-    char *temp;
-    *val = strtol(str, &temp, 0);
+    if (str[strlen(str) - 1] == '\n')
+    {
+        str[strcspn(str, "\n")] = 0;
+    }
 
-    if (temp == str || *temp != '\0')
-        return 0;
+    int val = atoi(str);
 
-    return 1;
+    char validator[strlen(str)];
+    sprintf(validator, "%d", val);
+
+    if (strcmp(validator, str) == 0)
+        return val;
+
+    return -1;
 }
 
+// elementAlreadyRegistered returns the array index of tuple of points in `loc`,
+// if it exists. Returns -1 otherwise
 int elementAlreadyRegistered(int X, int Y, struct Locations *loc)
 {
-    for (int i = 0; i < loc->currOcupation; i++)
+    for (int i = 0; i < loc->currOccupancy; i++)
     {
         if (X == loc->points[i].X && Y == loc->points[i].Y)
-            return 1;
+            return i;
     }
-    return 0;
+    return -1;
 }
 
 const char *writeReturnMessage(char *s1, char *s2, char *s3)
 {
-    char *ns = malloc(strlen(s1) + strlen(s2) + strlen(s3) + 1);
-    ns[0] = '\0';
-    strcat(ns, s1);
-    strcat(ns, " ");
-    strcat(ns, s2);
-    strcat(ns, s3);
-    return ns;
+    char *newStr = malloc(strlen(s1) + strlen(s2) + strlen(s3) + 3);
+    newStr[0] = '\0';
+    strcat(newStr, s1);
+    strcat(newStr, " ");
+    strcat(newStr, s2);
+    strcat(newStr, " ");
+    strcat(newStr, s3);
+    return newStr;
 }
 
-// handleAdd handles the 'add' command. If it was successful, returns 1.
-// if the new element to be inserted already exists, returns 2.
-// if an error occured, returns 0.
-const char *handleAdd(char *addCmd, struct Locations *loc)
+// calculates the euclidean distance between (x1, y1) and (x2, y2)
+float distance(int x1, int y1, int x2, int y2)
 {
-    int X, Y;
-
-    char *coordX = strtok(NULL, " ");
-    if (!parseInt(coordX, &X))
-        return "error";
-
-    char *coordY = strtok(NULL, " ");
-    if (!parseInt(coordY, &Y))
-        return "error";
-
-    char *end = strtok(NULL, " ");
-    if (end != NULL)
-        return "error";
-
-    if (elementAlreadyRegistered(X, Y, loc))
-        return writeReturnMessage(coordX, coordY, " already exists");
-
-    loc->points[loc->currOcupation].X = X;
-    loc->points[loc->currOcupation].Y = Y;
-    loc->currOcupation++;
-
-    return writeReturnMessage(coordX, coordY, " added");
-}
-
-const char *handleCommand(char *msg, struct Locations *loc)
-{
-    const char *cmdReturn;
-    char *cmd = strtok(msg, " ");
-
-    if (strcmp(cmd, "add") == 0)
-    { // add X Y
-        cmdReturn = handleAdd(cmd, loc);
-    }
-    else if (strcmp(cmd, "rm") == 0)
-    { // rm X y
-    }
-    else if (strcmp(cmd, "list") == 0)
-    { // list
-    }
-    else if (strcmp(cmd, "query") == 0)
-    { // query X Y
-    }
-    else
-    {
-    }
-
-    return cmdReturn;
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) * 1.0);
 }
