@@ -1,11 +1,11 @@
+// TODO: remove fucking strtok from here
 
 #include "utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define BUFSZ 500
 
 // handleAdd handles the 'add X Y' command
 const char *handleAdd(char *addCmd, struct Locations *loc)
@@ -155,23 +155,22 @@ const char *handleQuery(char *addCmd, struct Locations *loc)
 const char *handleCommand(char *msg, struct Locations *loc)
 {
     const char *cmdReturn;
-    char *cmd = strtok(msg, " ");
 
-    if (strcmp(cmd, "add") == 0)
+    if (strstr(msg, "add") != NULL)
     { // add X Y
-        cmdReturn = handleAdd(cmd, loc);
+        cmdReturn = handleAdd(msg, loc);
     }
-    else if (strcmp(cmd, "rm") == 0)
+    else if (strstr(msg, "rm") != NULL)
     { // rm X y
-        cmdReturn = handleRemove(cmd, loc);
+        cmdReturn = handleRemove(msg, loc);
     }
-    else if (strcmp(cmd, "list\n") == 0)
+    else if (strstr(msg, "list") != NULL)
     { // list
-        cmdReturn = handleList(cmd, loc);
+        cmdReturn = handleList(msg, loc);
     }
-    else if (strcmp(cmd, "query") == 0)
+    else if (strstr(msg, "query") != NULL)
     { // query X Y
-        cmdReturn = handleQuery(cmd, loc);
+        cmdReturn = handleQuery(msg, loc);
     }
     else
     {

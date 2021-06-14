@@ -28,17 +28,20 @@ void runClient(int sfd)
 		printf("> ");
 		fgets(buf, BUFSZ - 1, stdin);
 
-		char trimmed[strlen(buf)];
-		strcpy(trimmed, buf);
+		// int msgSize = strlen(buf);
+		// char trimmed[msgSize + strlen(buf)];
+		// sprintf(trimmed, "%d-", msgSize);
+		// strcat(trimmed, buf);
 
-		size_t count = send(sfd, trimmed, strlen(trimmed) + 1, 0);
-		if (count != strlen(trimmed) + 1)
+		// size_t count = send(sfd, trimmed, strlen(trimmed) + 1, 0);
+		size_t count = send(sfd, "24-add 123 123\nadd 321 321\n", strlen("24-add 123 123\nadd 321 321\n") + 1, 0);
+		if (count != strlen("24-add 123 123\nadd 321 321\n") + 1) //trimmed
 		{
 			logexit("error while sending message to server");
 		}
 
-		if ((strlen(trimmed) == 5) && // last char is '\n'
-			(strcmp(trimmed, "exit\n") == 0 || strcmp(trimmed, "kill\n") == 0))
+		if ((strlen(buf) == 5) && // last char is '\n'
+			(strcmp(buf, "exit\n") == 0 || strcmp(buf, "kill\n") == 0))
 			break;
 
 		bzero(buf, BUFSZ); // resets buffer

@@ -1,22 +1,10 @@
+#include "utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-
-#define BUFSZ 500
-
-struct Coordinates
-{
-    int X;
-    int Y;
-};
-
-struct Locations
-{
-    int currOccupancy;
-    struct Coordinates points[50];
-};
 
 int parseInt(char *str)
 {
@@ -34,6 +22,14 @@ int parseInt(char *str)
         return val;
 
     return -1;
+}
+
+int getMsgSize(char *reader, char *receiver)
+{
+    char *num = strtok(reader, "-");
+    strcpy(receiver, strtok(NULL, "-"));
+
+    return parseInt(num);
 }
 
 // elementAlreadyRegistered returns the array index of tuple of points in `loc`,

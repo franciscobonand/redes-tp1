@@ -1,5 +1,6 @@
 #include "common.h"
 #include "handlers.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#define BUFSZ 500
+#define BUFSZ 504 // 4 additional chars to identify msg size
 
 struct Locations locs;
 
@@ -20,17 +21,42 @@ void usage(int argc, char **argv)
     exit(EXIT_FAILURE);
 }
 
+void sendResponse(int csock, const char *msg)
+{
+    char content[strlen(msg)];
+
+    sprintf(content, "< %s", msg);
+    size_t count = send(csock, content, strlen(content) + 1, 0);
+    if (count != strlen(content) + 1)
+    {
+        logexit("error while sending message to client");
+    }
+}
+
 int listenToClient(int csock)
 {
     char buf[BUFSZ];
+    char reader[BUFSZ];
     int kill = 0;
     const char *cmdReturn;
 
     for (;;)
     {
         bzero(buf, BUFSZ);
-        size_t count = recv(csock, buf, BUFSZ - 1, 0);
-        printf("[log] received: %s", buf);
+        bzero(reader, BUFSZ);
+        size_t count = recv(csock, reader, BUFSZ - 1, 0);
+
+        int nBytes = getMsgSize(reader, buf);
+        unsigned total = strlen(buf);
+        while (total < nBytes)
+        { // case when the message received is partitioned
+            bzero(reader, BUFSZ);
+            count = recv(csock, reader, BUFSZ - 1, 0);
+            strcat(buf, reader);
+            total += count;
+        }
+
+        printf("[log] received: %s\n", buf);
 
         if (buf == NULL ||
             ((strlen(buf) == 5) && (strcmp(buf, "exit\n") == 0))) // last char is '\n'
@@ -42,15 +68,31 @@ int listenToClient(int csock)
             break;
         }
 
-        cmdReturn = handleCommand(buf, &locs);
+        if (strlen(buf) < 500 && (strstr(buf, "\n") != NULL))
+        { // received data is less than 500 bytes and has '\n' in it
+            char *cmd = strtok(buf, "\n");
 
-        sprintf(buf, "< %s", cmdReturn);
-        count = send(csock, buf, strlen(buf) + 1, 0);
-        if (count != strlen(buf) + 1)
-        {
-            logexit("send");
+            while (cmd != NULL)
+            { // loop through the string to extract all commands
+                printf("Command1 %s\n", cmd);
+
+                cmdReturn = handleCommand(cmd, &locs);
+
+                sendResponse(csock, cmdReturn);
+
+                if (strcmp(cmdReturn, "error") == 0)
+                    break;
+
+                cmd = strtok(NULL, "\n");
+                printf("Command2 %s\n", cmd);
+            }
         }
-
+        else
+        {
+            cmdReturn = "error";
+            sendResponse(csock, cmdReturn);
+        }
+        printf("debug4\n");
         if (strcmp(cmdReturn, "error") == 0)
             break;
     }

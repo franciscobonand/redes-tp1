@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BUFSZ 500
-
 const char *handleAdd(char *addCmd, struct Locations *loc);
 
 const char *handleList(char *addCmd, struct Locations *loc);
