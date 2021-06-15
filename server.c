@@ -1,6 +1,5 @@
 #include "common.h"
 #include "handlers.h"
-#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,9 +22,10 @@ void usage(int argc, char **argv)
 
 void sendResponse(int csock, const char *msg)
 {
-    char content[strlen(msg)];
+    int msgSize = strlen(msg);
+    char content[msgSize];
 
-    sprintf(content, "< %s", msg);
+    sprintf(content, "%d-%s", msgSize, msg);
     size_t count = send(csock, content, strlen(content) + 1, 0);
     if (count != strlen(content) + 1)
     {
@@ -46,15 +46,7 @@ int listenToClient(int csock)
         bzero(reader, BUFSZ);
         size_t count = recv(csock, reader, BUFSZ - 1, 0);
 
-        int nBytes = getMsgSize(reader, buf);
-        unsigned total = strlen(buf);
-        while (total < nBytes)
-        { // case when the message received is partitioned
-            bzero(reader, BUFSZ);
-            count = recv(csock, reader, BUFSZ - 1, 0);
-            strcat(buf, reader);
-            total += count;
-        }
+        getWholeMsg(csock, reader, buf, count);
 
         printf("[log] received: %s\n", buf);
 
@@ -71,20 +63,28 @@ int listenToClient(int csock)
         if (strlen(buf) < 500 && (strstr(buf, "\n") != NULL))
         { // received data is less than 500 bytes and has '\n' in it
             char *cmd = strtok(buf, "\n");
+            int multipleResp = 0;
 
             while (cmd != NULL)
             { // loop through the string to extract all commands
-                printf("Command1 %s\n", cmd);
-
                 cmdReturn = handleCommand(cmd, &locs);
+                // printf("INFERNO\n");
+                cmd = strtok(NULL, "\n");
+                if (cmd != NULL && !multipleResp)
+                { // means that the client should expect multiple responses
+                    sendResponse(csock, "b");
+                    multipleResp = 1;
+                }
 
                 sendResponse(csock, cmdReturn);
 
                 if (strcmp(cmdReturn, "error") == 0)
                     break;
+            }
 
-                cmd = strtok(NULL, "\n");
-                printf("Command2 %s\n", cmd);
+            if (multipleResp && (strcmp(cmdReturn, "error") != 0))
+            {
+                sendResponse(csock, "e");
             }
         }
         else
@@ -92,7 +92,7 @@ int listenToClient(int csock)
             cmdReturn = "error";
             sendResponse(csock, cmdReturn);
         }
-        printf("debug4\n");
+
         if (strcmp(cmdReturn, "error") == 0)
             break;
     }

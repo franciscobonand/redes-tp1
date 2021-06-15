@@ -9,13 +9,55 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define BUFSZ 500
+#define BUFSZ 504 // 4 additional chars to identify msg size
 
 void usage(int argc, char **argv)
 {
 	printf("usage: %s <server IP> <server port>\n", argv[0]);
 	printf("example: %s 127.0.0.1 51511\n", argv[0]);
 	exit(EXIT_FAILURE);
+}
+
+// receiveResponse returns 1 if error happened. Returns 0 otherwise
+int receiveResponse(int sfd)
+{
+	char buf[BUFSZ];
+	char reader[BUFSZ];
+
+	bzero(buf, BUFSZ); // resets buffer
+	bzero(reader, BUFSZ);
+	size_t count = recv(sfd, reader, BUFSZ - 1, 0);
+
+	getWholeMsg(sfd, reader, buf, count);
+
+	if (strcmp(buf, "< b") == 0)
+	{ // multiple returns are expected
+		while (1)
+		{
+			bzero(buf, BUFSZ);
+			bzero(reader, BUFSZ);
+			count = recv(sfd, buf, sizeof(buf) - 1, 0);
+
+			getWholeMsg(sfd, reader, buf, count);
+
+			if (strcmp(buf, "< e") == 0)
+				return 0;
+
+			printf("< %s\n", buf);
+
+			if (strcmp(buf, "< error") == 0)
+				return 1;
+		}
+	}
+	else
+	{
+		printf("< %s\n", buf);
+	}
+
+	if (strcmp(buf, "< error") == 0)
+		return 1;
+
+	return 0;
 }
 
 void runClient(int sfd)
@@ -44,11 +86,7 @@ void runClient(int sfd)
 			(strcmp(buf, "exit\n") == 0 || strcmp(buf, "kill\n") == 0))
 			break;
 
-		bzero(buf, BUFSZ); // resets buffer
-		read(sfd, buf, sizeof(buf));
-		printf("%s\n", buf);
-
-		if (strcmp(buf, "< error") == 0)
+		if (receiveResponse(sfd)) // returns true (1) if error occured
 			break;
 	};
 }
