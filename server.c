@@ -52,10 +52,14 @@ int listenToClient(int csock)
 
         if (buf == NULL ||
             ((strlen(buf) == 5) && (strcmp(buf, "exit\n") == 0))) // last char is '\n'
+        {
+            printf("[log] current client closed, waiting for new connections...\n");
             break;
+        }
 
         if ((strlen(buf) == 5) && (strcmp(buf, "kill\n") == 0)) // last char is '\n'
         {
+            printf("[log] 'kill' command received, proceeding to close server...\n");
             kill = 1;
             break;
         }
@@ -76,6 +80,7 @@ int listenToClient(int csock)
                     multipleResp = 1;
                 }
 
+                sleep(1);
                 sendResponse(csock, cmdReturn);
 
                 if (strcmp(cmdReturn, "error") == 0)
@@ -84,6 +89,7 @@ int listenToClient(int csock)
 
             if (multipleResp && (strcmp(cmdReturn, "error") != 0))
             {
+                sleep(1);
                 sendResponse(csock, "e");
             }
         }
@@ -94,7 +100,10 @@ int listenToClient(int csock)
         }
 
         if (strcmp(cmdReturn, "error") == 0)
+        {
+            printf("[error] invalid data received, terminating client...\n");
             break;
+        }
     }
 
     return kill;

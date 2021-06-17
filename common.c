@@ -35,16 +35,30 @@ int parseNum(char *str)
 
 int getMsgSize(char *reader, char *receiver)
 {
-    char *num = strtok(reader, "-");
-    strcpy(receiver, strtok(NULL, "-"));
+    char *strReader[BUFSZ];
+    char c[2]; // char size
 
-    return parseNum(num);
+    for (int i = 0; i < 4; i++)
+    { // messages can have max 4 digits representing its size
+        sprintf(c, "%c", reader[i]);
+        if (strcmp(c, "-") == 0)
+        {
+            *strReader = &reader[i + 1];
+            reader[i] = '\0';
+            strcpy(receiver, *strReader);
+            break;
+        }
+        bzero(c, strlen(c));
+    }
+
+    return parseNum(reader);
 }
 
 void getWholeMsg(int sfd, char *reader, char *buf, size_t count)
 {
     int nBytes = getMsgSize(reader, buf);
     unsigned total = strlen(buf);
+
     while (total < nBytes)
     { // case when the message received is partitioned
         printf("Entered while\n");
@@ -53,6 +67,7 @@ void getWholeMsg(int sfd, char *reader, char *buf, size_t count)
         strcat(buf, reader);
         total += count;
     }
+    printf("Exited while\n");
 }
 
 int addrparse(const char *addrstr, const char *portstr,

@@ -30,23 +30,23 @@ int receiveResponse(int sfd)
 
 	getWholeMsg(sfd, reader, buf, count);
 
-	if (strcmp(buf, "< b") == 0)
+	if (strcmp(buf, "b") == 0)
 	{ // multiple returns are expected
 		while (1)
 		{
 			bzero(buf, BUFSZ);
 			bzero(reader, BUFSZ);
-			count = recv(sfd, buf, sizeof(buf) - 1, 0);
 
+			count = recv(sfd, reader, BUFSZ - 1, 0);
 			getWholeMsg(sfd, reader, buf, count);
 
-			if (strcmp(buf, "< e") == 0)
-				return 0;
+			if (strcmp(buf, "e") == 0)
+				return 1;
 
 			printf("< %s\n", buf);
 
-			if (strcmp(buf, "< error") == 0)
-				return 1;
+			if (strcmp(buf, "error") == 0)
+				return 0;
 		}
 	}
 	else
@@ -54,10 +54,10 @@ int receiveResponse(int sfd)
 		printf("< %s\n", buf);
 	}
 
-	if (strcmp(buf, "< error") == 0)
-		return 1;
+	if (strcmp(buf, "error") == 0)
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 void runClient(int sfd)
@@ -70,14 +70,16 @@ void runClient(int sfd)
 		printf("> ");
 		fgets(buf, BUFSZ - 1, stdin);
 
-		// int msgSize = strlen(buf);
-		// char trimmed[msgSize + strlen(buf)];
-		// sprintf(trimmed, "%d-", msgSize);
-		// strcat(trimmed, buf);
+		int msgSize = strlen(buf);
+		char trimmed[msgSize + strlen(buf)];
+		sprintf(trimmed, "%d-", msgSize);
+		strcat(trimmed, buf);
 
-		// size_t count = send(sfd, trimmed, strlen(trimmed) + 1, 0);
-		size_t count = send(sfd, "24-add 123 123\nadd 321 321\n", strlen("24-add 123 123\nadd 321 321\n") + 1, 0);
-		if (count != strlen("24-add 123 123\nadd 321 321\n") + 1) //trimmed
+		size_t count = send(sfd, trimmed, strlen(trimmed) + 1, 0);
+		// The following commented line was used to test multi-command message. Uncomment it, comment lines 73-78 and
+		// replace 'trimmed' in the if clause with the multi-command string to test it!
+		// size_t count = send(sfd, "29-add 123 123\nadd 321 321\nlist\n", strlen("29-add 123 123\nadd 321 321\nlist\n") + 1, 0);
+		if (count != strlen(trimmed) + 1)
 		{
 			logexit("error while sending message to server");
 		}
@@ -86,7 +88,7 @@ void runClient(int sfd)
 			(strcmp(buf, "exit\n") == 0 || strcmp(buf, "kill\n") == 0))
 			break;
 
-		if (receiveResponse(sfd)) // returns true (1) if error occured
+		if (!receiveResponse(sfd)) // returns true (0) if error occured
 			break;
 	};
 }

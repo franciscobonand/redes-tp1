@@ -1,3 +1,5 @@
+// TODO: fix function that prints messages
+// TODO: query 9999 9999 broke somehow
 #include "handlers.h"
 
 #include <stdio.h>
@@ -38,14 +40,18 @@ int elementAlreadyRegistered(int X, int Y, struct Locations *loc)
 
 const char *writeReturnMessage(char *s1, char *s2, char *s3)
 {
-    char *newStr = malloc(strlen(s1) + strlen(s2) + strlen(s3) + 3);
-    newStr[0] = '\0';
-    strcat(newStr, s1);
+    size_t length = strlen(s1) + strlen(s2) + strlen(s3) + 3;
+    char newStr[length];
+    bzero(newStr, strlen(newStr));
+
+    strcpy(newStr, s1);
     strcat(newStr, " ");
     strcat(newStr, s2);
     strcat(newStr, " ");
     strcat(newStr, s3);
-    return newStr;
+
+    char *ret = newStr;
+    return ret;
 }
 
 // calculates the euclidean distance between (x1, y1) and (x2, y2)
@@ -60,10 +66,12 @@ int getCoordinates(char *cmd, char *X, char *Y)
 {
     if (strlen(cmd) < 15)
     {
-        char *strReader[10]; // max valid size for command after 'add ' is removed ('9999 9999\n')
+        char *strReader[10]; // max valid size for command after first word is removed ('9999 9999\n')
         char xStr[5];        // max valid size for one coordinate
         char yStr[5];        // max valid size for one coordinate
         char buf[2];         // char size
+        bzero(xStr, strlen(xStr));
+        bzero(yStr, strlen(yStr));
 
         for (int i = 0; i < strlen(cmd) - 1; i++)
         {
@@ -72,10 +80,10 @@ int getCoordinates(char *cmd, char *X, char *Y)
             {
                 *strReader = &cmd[i + 1];
                 strcpy(xStr, *strReader);
-                memset(buf, 0, 2);
+                bzero(buf, strlen(buf));
                 break;
             }
-            memset(buf, 0, 2);
+            bzero(buf, strlen(buf));
             if (i == strlen(cmd) - 2)
             { // case when no white space between numbers is found
                 return 0;
@@ -89,10 +97,10 @@ int getCoordinates(char *cmd, char *X, char *Y)
             {
                 *strReader = &xStr[i + 1];
                 xStr[i] = '\0';
-                strcpy(yStr, *strReader);
+                strncpy(yStr, *strReader, 4);
                 break;
             }
-            memset(buf, 0, 2);
+            bzero(buf, strlen(buf));
             if (i == strlen(cmd) - 2)
             { // case when no white space between numbers is found
                 return 0;
@@ -139,17 +147,17 @@ const char *handleAdd(char *addCmd, struct Locations *loc)
 }
 
 // handleList handles the 'list' command
-const char *handleList(char *addCmd, struct Locations *loc)
+const char *handleList(char *listCmd, struct Locations *loc)
 {
-    if (strlen(addCmd) < 5 ||
-        (strlen(addCmd) == 5 && addCmd[strlen(addCmd) - 1] == '\n'))
+    if (strlen(listCmd) < 5 ||
+        (strlen(listCmd) == 5 && listCmd[strlen(listCmd) - 1] == '\n'))
     {
         if (loc->currOccupancy == 0)
             return "none";
 
-        char *list = malloc((3 * loc->currOccupancy) + 1);
+        char list[(9 * loc->currOccupancy) + (loc->currOccupancy - 1) + 1];
         char pointX[5], pointY[5]; // array size defined by: `(int)((ceil(log10(9999))+1)*sizeof(char));`
-        list[0] = '\0';
+        bzero(list, strlen(list));
 
         for (int i = 0; i < loc->currOccupancy; i++)
         {
@@ -162,95 +170,96 @@ const char *handleList(char *addCmd, struct Locations *loc)
                 strcat(list, " ");
         }
 
-        return list;
+        char *ret = list;
+        return ret;
     }
 
     return "error";
 }
 
 // handleRemove handles the 'rm X Y' command
-const char *handleRemove(char *addCmd, struct Locations *loc)
+const char *handleRemove(char *rmCmd, struct Locations *loc)
 {
     int X, Y;
+    char coordX[5], coordY[5];
 
-    char *coordX = strtok(NULL, " ");
-    X = parseInt(coordX);
-    if (X < 0 || X > 9999)
-        return "error";
+    if (getCoordinates(rmCmd, coordX, coordY))
+    {
+        X = parseInt(coordX);
+        if (X < 0 || X > 9999)
+            return "error";
 
-    char *coordY = strtok(NULL, " ");
-    Y = parseInt(coordY);
-    if (Y < 0 || Y > 9999)
-        return "error";
+        Y = parseInt(coordY);
+        if (Y < 0 || Y > 9999)
+            return "error";
 
-    char *end = strtok(NULL, " "); // additional invalid parts in add command
-    if (end != NULL)
-        return "error";
+        int elemIndex = elementAlreadyRegistered(X, Y, loc);
+        if (elemIndex == -1)
+            return writeReturnMessage(coordX, coordY, "does not exist");
 
-    int elemIndex = elementAlreadyRegistered(X, Y, loc);
-    if (elemIndex == -1)
-        return writeReturnMessage(coordX, coordY, "does not exist");
+        for (int i = elemIndex; i < loc->currOccupancy - 1; i++)
+        { // removes the element and "brings forward" all elements after it
+            loc->points[i].X = loc->points[i + 1].X;
+            loc->points[i].Y = loc->points[i + 1].Y;
+        }
+        // make the last element invalid (as it was removed)
+        loc->points[loc->currOccupancy - 1].X = -1;
+        loc->points[loc->currOccupancy - 1].Y = -1;
 
-    for (int i = elemIndex; i < loc->currOccupancy - 1; i++)
-    { // removes the element and "brings forward" all elements after it
-        loc->points[i].X = loc->points[i + 1].X;
-        loc->points[i].Y = loc->points[i + 1].Y;
+        // updated current occupancy
+        loc->currOccupancy--;
+
+        return writeReturnMessage(coordX, coordY, "removed");
     }
-    // make the last element invalid (as it was removed)
-    loc->points[loc->currOccupancy - 1].X = -1;
-    loc->points[loc->currOccupancy - 1].Y = -1;
 
-    // updated current occupancy
-    loc->currOccupancy--;
-    return writeReturnMessage(coordX, coordY, "removed");
+    return "error";
 }
 
 // handleQuery handles the 'query X Y' command
-const char *handleQuery(char *addCmd, struct Locations *loc)
+const char *handleQuery(char *queryCmd, struct Locations *loc)
 {
     int X, Y;
+    char coordX[5], coordY[5];
 
-    char *coordX = strtok(NULL, " ");
-    X = parseInt(coordX);
-    if (X < 0 || X > 9999)
-        return "error";
-
-    char *coordY = strtok(NULL, " ");
-    Y = parseInt(coordY);
-    if (Y < 0 || Y > 9999)
-        return "error";
-
-    char *end = strtok(NULL, " "); // additional invalid parts in add command
-    if (end != NULL)
-        return "error";
-
-    if (loc->currOccupancy == 0)
-        return "none";
-
-    float minDistance = 14141.0; // bigger than max dist possible (from 0,0 to 9999,9999)
-    float currDist;
-    int minX, minY;
-    for (int i = 0; i < loc->currOccupancy; i++)
+    if (getCoordinates(queryCmd, coordX, coordY))
     {
-        currDist = distance(X, Y, loc->points[i].X, loc->points[i].Y);
-        if (currDist < minDistance)
+        X = parseInt(coordX);
+        if (X < 0 || X > 9999)
+            return "error";
+
+        Y = parseInt(coordY);
+        if (Y < 0 || Y > 9999)
+            return "error";
+
+        if (loc->currOccupancy == 0)
+            return "none";
+
+        float minDistance = 14141.0; // bigger than max dist possible (from 0,0 to 9999,9999)
+        float currDist;
+        int minX, minY;
+        for (int i = 0; i < loc->currOccupancy; i++)
         {
-            minDistance = currDist;
-            minX = loc->points[i].X;
-            minY = loc->points[i].Y;
+            currDist = distance(X, Y, loc->points[i].X, loc->points[i].Y);
+            if (currDist < minDistance)
+            {
+                minDistance = currDist;
+                minX = loc->points[i].X;
+                minY = loc->points[i].Y;
+            }
         }
+
+        char *minDistCoord = malloc(4);
+        char pointX[5], pointY[5]; // array size defined by: `(int)((ceil(log10(9999))+1)*sizeof(char));`
+        minDistCoord[0] = '\0';
+        sprintf(pointX, "%d", minX);
+        sprintf(pointY, "%d", minY);
+        strcat(minDistCoord, pointX);
+        strcat(minDistCoord, " ");
+        strcat(minDistCoord, pointY);
+
+        return minDistCoord;
     }
-
-    char *minDistCoord = malloc(4);
-    char pointX[5], pointY[5]; // array size defined by: `(int)((ceil(log10(9999))+1)*sizeof(char));`
-    minDistCoord[0] = '\0';
-    sprintf(pointX, "%d", minX);
-    sprintf(pointY, "%d", minY);
-    strcat(minDistCoord, pointX);
-    strcat(minDistCoord, " ");
-    strcat(minDistCoord, pointY);
-
-    return minDistCoord;
+    return "error";
 }
 
 const char *handleCommand(char *msg, struct Locations *loc)
