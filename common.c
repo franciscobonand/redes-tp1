@@ -61,13 +61,11 @@ void getWholeMsg(int sfd, char *reader, char *buf, size_t count)
 
     while (total < nBytes)
     { // case when the message received is partitioned
-        printf("Entered while\n");
         bzero(reader, BUFSZ);
         count = recv(sfd, reader, BUFSZ - 1, 0);
         strcat(buf, reader);
         total += count;
     }
-    printf("Exited while\n");
 }
 
 int addrparse(const char *addrstr, const char *portstr,

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -20,12 +21,12 @@ void usage(int argc, char **argv)
     exit(EXIT_FAILURE);
 }
 
-void sendResponse(int csock, const char *msg)
+void sendResponse(int csock, char *msg)
 {
-    int msgSize = strlen(msg);
-    char content[msgSize];
+    size_t msgSize = strlen(msg);
+    char content[msgSize + 4];
 
-    sprintf(content, "%d-%s", msgSize, msg);
+    sprintf(content, "%ld-%s", msgSize, msg);
     size_t count = send(csock, content, strlen(content) + 1, 0);
     if (count != strlen(content) + 1)
     {
@@ -38,7 +39,7 @@ int listenToClient(int csock)
     char buf[BUFSZ];
     char reader[BUFSZ];
     int kill = 0;
-    const char *cmdReturn;
+    char cmdReturn[BUFSZ];
 
     for (;;)
     {
@@ -71,8 +72,9 @@ int listenToClient(int csock)
 
             while (cmd != NULL)
             { // loop through the string to extract all commands
-                cmdReturn = handleCommand(cmd, &locs);
-                // printf("INFERNO\n");
+                bzero(cmdReturn, BUFSZ);
+                handleCommand(cmd, &locs, cmdReturn);
+
                 cmd = strtok(NULL, "\n");
                 if (cmd != NULL && !multipleResp)
                 { // means that the client should expect multiple responses
@@ -81,6 +83,7 @@ int listenToClient(int csock)
                 }
 
                 sleep(1);
+                printf("cmdReturn: %s\n", cmdReturn);
                 sendResponse(csock, cmdReturn);
 
                 if (strcmp(cmdReturn, "error") == 0)
@@ -95,8 +98,7 @@ int listenToClient(int csock)
         }
         else
         {
-            cmdReturn = "error";
-            sendResponse(csock, cmdReturn);
+            sendResponse(csock, "error");
         }
 
         if (strcmp(cmdReturn, "error") == 0)

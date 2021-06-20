@@ -1,4 +1,4 @@
-// TODO: fix function that prints messages
+// TODO: number starting with 0
 #include "handlers.h"
 
 #include <stdio.h>
@@ -37,9 +37,9 @@ int elementAlreadyRegistered(int X, int Y, struct Locations *loc)
     return -1;
 }
 
-const char *writeReturnMessage(char *s1, char *s2, char *s3)
+void writeReturnMessage(char *s1, char *s2, char *s3, char *cmdReturn)
 {
-    size_t length = strlen(s1) + strlen(s2) + strlen(s3) + 3;
+    int length = strlen(s1) + strlen(s2) + strlen(s3) + 3;
     char newStr[length];
     bzero(newStr, strlen(newStr));
 
@@ -48,9 +48,7 @@ const char *writeReturnMessage(char *s1, char *s2, char *s3)
     strcat(newStr, s2);
     strcat(newStr, " ");
     strcat(newStr, s3);
-
-    char *ret = newStr;
-    return ret;
+    sprintf(cmdReturn, "%s", newStr);
 }
 
 // calculates the euclidean distance between (x1, y1) and (x2, y2)
@@ -115,7 +113,7 @@ int getCoordinates(char *cmd, char *X, char *Y)
 }
 
 // handleAdd handles the 'add X Y' command
-const char *handleAdd(char *addCmd, struct Locations *loc)
+void handleAdd(char *addCmd, struct Locations *loc, char *cmdReturn)
 {
     int X, Y;
     char coordX[5], coordY[5];
@@ -124,35 +122,53 @@ const char *handleAdd(char *addCmd, struct Locations *loc)
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         Y = parseInt(coordY);
         if (Y < 0 || Y > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         if (loc->currOccupancy >= 50)
-            return "limit exceeded";
+        {
+            sprintf(cmdReturn, "%s", "limit exceeded");
+            return;
+        }
 
         if (elementAlreadyRegistered(X, Y, loc) != -1)
-            return writeReturnMessage(coordX, coordY, "already exists");
+        {
+            writeReturnMessage(coordX, coordY, "already exists", cmdReturn);
+            return;
+        }
 
         loc->points[loc->currOccupancy].X = X;
         loc->points[loc->currOccupancy].Y = Y;
         loc->currOccupancy++;
 
-        return writeReturnMessage(coordX, coordY, "added");
+        writeReturnMessage(coordX, coordY, "added", cmdReturn);
+        printf("msg in add: %s\n", cmdReturn);
+        return;
     }
-    return "error";
+    sprintf(cmdReturn, "%s", "error");
+    return;
 }
 
 // handleList handles the 'list' command
-const char *handleList(char *listCmd, struct Locations *loc)
+void handleList(char *listCmd, struct Locations *loc, char *cmdReturn)
 {
     if (strlen(listCmd) < 5 ||
         (strlen(listCmd) == 5 && listCmd[strlen(listCmd) - 1] == '\n'))
     {
         if (loc->currOccupancy == 0)
-            return "none";
+        {
+            sprintf(cmdReturn, "%s", "none");
+            return;
+        }
 
         char list[(9 * loc->currOccupancy) + (loc->currOccupancy - 1) + 1];
         char pointX[5], pointY[5]; // array size defined by: `(int)((ceil(log10(9999))+1)*sizeof(char));`
@@ -168,16 +184,17 @@ const char *handleList(char *listCmd, struct Locations *loc)
             if (i < loc->currOccupancy - 1)
                 strcat(list, " ");
         }
-
-        char *ret = list;
-        return ret;
+        printf("list size: %ld\n", strlen(list));
+        printf("list: %s\n", list);
+        sprintf(cmdReturn, "%s", list);
+        return;
     }
 
-    return "error";
+    sprintf(cmdReturn, "%s", "error");
 }
 
 // handleRemove handles the 'rm X Y' command
-const char *handleRemove(char *rmCmd, struct Locations *loc)
+void handleRemove(char *rmCmd, struct Locations *loc, char *cmdReturn)
 {
     int X, Y;
     char coordX[5], coordY[5];
@@ -186,15 +203,24 @@ const char *handleRemove(char *rmCmd, struct Locations *loc)
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         Y = parseInt(coordY);
         if (Y < 0 || Y > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         int elemIndex = elementAlreadyRegistered(X, Y, loc);
         if (elemIndex == -1)
-            return writeReturnMessage(coordX, coordY, "does not exist");
+        {
+            writeReturnMessage(coordX, coordY, "does not exist", cmdReturn);
+            return;
+        }
 
         for (int i = elemIndex; i < loc->currOccupancy - 1; i++)
         { // removes the element and "brings forward" all elements after it
@@ -208,14 +234,15 @@ const char *handleRemove(char *rmCmd, struct Locations *loc)
         // updated current occupancy
         loc->currOccupancy--;
 
-        return writeReturnMessage(coordX, coordY, "removed");
+        writeReturnMessage(coordX, coordY, "removed", cmdReturn);
+        return;
     }
 
-    return "error";
+    sprintf(cmdReturn, "%s", "error");
 }
 
 // handleQuery handles the 'query X Y' command
-const char *handleQuery(char *queryCmd, struct Locations *loc)
+void handleQuery(char *queryCmd, struct Locations *loc, char *cmdReturn)
 {
     int X, Y;
     char coordX[5], coordY[5];
@@ -224,14 +251,23 @@ const char *handleQuery(char *queryCmd, struct Locations *loc)
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         Y = parseInt(coordY);
         if (Y < 0 || Y > 9999)
-            return "error";
+        {
+            sprintf(cmdReturn, "%s", "error");
+            return;
+        }
 
         if (loc->currOccupancy == 0)
-            return "none";
+        {
+            sprintf(cmdReturn, "%s", "none");
+            return;
+        }
 
         float minDistance = 14141.0; // bigger than max dist possible (from 0,0 to 9999,9999)
         float currDist;
@@ -256,35 +292,33 @@ const char *handleQuery(char *queryCmd, struct Locations *loc)
         strcat(minDistCoord, " ");
         strcat(minDistCoord, pointY);
 
-        return minDistCoord;
+        sprintf(cmdReturn, "%s", minDistCoord);
+        return;
     }
-    return "error";
+
+    sprintf(cmdReturn, "%s", "error");
 }
 
-const char *handleCommand(char *msg, struct Locations *loc)
+void handleCommand(char *msg, struct Locations *loc, char *cmdReturn)
 {
-    const char *cmdReturn;
-
     if (strstr(msg, "add") != NULL)
     { // add X Y
-        cmdReturn = handleAdd(msg, loc);
+        handleAdd(msg, loc, cmdReturn);
     }
     else if (strstr(msg, "rm") != NULL)
     { // rm X y
-        cmdReturn = handleRemove(msg, loc);
+        handleRemove(msg, loc, cmdReturn);
     }
     else if (strstr(msg, "list") != NULL)
     { // list
-        cmdReturn = handleList(msg, loc);
+        handleList(msg, loc, cmdReturn);
     }
     else if (strstr(msg, "query") != NULL)
     { // query X Y
-        cmdReturn = handleQuery(msg, loc);
+        handleQuery(msg, loc, cmdReturn);
     }
     else
     {
-        return "error";
+        sprintf(cmdReturn, "%s", "error");
     }
-
-    return cmdReturn;
 }
