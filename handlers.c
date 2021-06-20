@@ -1,5 +1,4 @@
 // TODO: fix function that prints messages
-// TODO: query 9999 9999 broke somehow
 #include "handlers.h"
 
 #include <stdio.h>
@@ -64,7 +63,7 @@ float distance(int x1, int y1, int x2, int y2)
 // If successful, returns 1. Returns 0 otherwise.
 int getCoordinates(char *cmd, char *X, char *Y)
 {
-    if (strlen(cmd) < 15)
+    if (strlen(cmd) <= 15)
     {
         char *strReader[10]; // max valid size for command after first word is removed ('9999 9999\n')
         char xStr[5];        // max valid size for one coordinate
