@@ -58,7 +58,7 @@ float distance(int x1, int y1, int x2, int y2)
 
 // getCoordinates receives a command string and extracts the coordinates X an Y from it.
 // If successful, returns 1. Returns 0 otherwise.
-int getCoordinates(char *cmd, char *X, char *Y)
+int getCoordinates(char *cmd, char *X, char *Y, char *command)
 {
     if (strlen(cmd) <= 15)
     {
@@ -80,8 +80,8 @@ int getCoordinates(char *cmd, char *X, char *Y)
                 break;
             }
             bzero(buf, strlen(buf));
-            if (i == strlen(cmd) - 2)
-            { // case when no white space between numbers is found
+            if ((command[i] != cmd[i]) || (i == strlen(cmd) - 2))
+            { // case when received command is invalid or no white space between numbers is found
                 return 0;
             }
         }

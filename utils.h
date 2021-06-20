@@ -14,4 +14,4 @@ void writeReturnMessage(char *s1, char *s2, char *s3, char *cmdReturn);
 
 float distance(int x1, int y1, int x2, int y2);
 
-int getCoordinates(char *cmd, char *X, char *Y);
+int getCoordinates(char *cmd, char *X, char *Y, char *command);

@@ -13,7 +13,7 @@ void handleAdd(char *addCmd, struct Locations *loc, char *cmdReturn)
     int X, Y;
     char coordX[5], coordY[5];
 
-    if (getCoordinates(addCmd, coordX, coordY))
+    if (getCoordinates(addCmd, coordX, coordY, "add"))
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
@@ -92,7 +92,7 @@ void handleRemove(char *rmCmd, struct Locations *loc, char *cmdReturn)
     int X, Y;
     char coordX[5], coordY[5];
 
-    if (getCoordinates(rmCmd, coordX, coordY))
+    if (getCoordinates(rmCmd, coordX, coordY, "rm"))
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
@@ -140,7 +140,7 @@ void handleQuery(char *queryCmd, struct Locations *loc, char *cmdReturn)
     int X, Y;
     char coordX[5], coordY[5];
 
-    if (getCoordinates(queryCmd, coordX, coordY))
+    if (getCoordinates(queryCmd, coordX, coordY, "query"))
     {
         X = parseInt(coordX);
         if (X < 0 || X > 9999)
