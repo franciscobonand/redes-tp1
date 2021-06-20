@@ -8,9 +8,20 @@
 
 int parseInt(char *str)
 {
+    int zeros = 0;
+    char buf[2];
+
     if (str[strlen(str) - 1] == '\n')
     {
         str[strcspn(str, "\n")] = 0; // removes '\n' from string
+    }
+
+    for (int i = 0; i < strlen(str); i++)
+    { // handles case where number starts with '0'
+        sprintf(buf, "%c", str[i]);
+        if (strcmp(buf, "0") != 0)
+            break;
+        zeros++;
     }
 
     int val = atoi(str);
@@ -18,7 +29,7 @@ int parseInt(char *str)
     char validator[strlen(str)];
     sprintf(validator, "%d", val);
 
-    if (strcmp(validator, str) == 0)
+    if (strcmp(validator, str) == zeros)
         return val;
 
     return -1;

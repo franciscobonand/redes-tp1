@@ -1,4 +1,3 @@
-// TODO: number starting with 0
 #include "handlers.h"
 #include "utils.h"
 
