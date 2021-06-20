@@ -1,4 +1,5 @@
 #include "common.h"
+#include "utils.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -13,24 +14,6 @@ void logexit(const char *msg)
 {
     perror(msg);
     exit(EXIT_FAILURE);
-}
-
-int parseNum(char *str)
-{
-    if (str[strlen(str) - 1] == '\n')
-    {
-        str[strcspn(str, "\n")] = 0; // removes '\n' from string
-    }
-
-    int val = atoi(str);
-
-    char validator[strlen(str)];
-    sprintf(validator, "%d", val);
-
-    if (strcmp(validator, str) == 0)
-        return val;
-
-    return -1;
 }
 
 int getMsgSize(char *reader, char *receiver)
@@ -51,7 +34,7 @@ int getMsgSize(char *reader, char *receiver)
         bzero(c, strlen(c));
     }
 
-    return parseNum(reader);
+    return parseInt(reader);
 }
 
 void getWholeMsg(int sfd, char *reader, char *buf, size_t count)

@@ -5,8 +5,6 @@
 
 void logexit(const char *msg);
 
-int parseNum(char *str);
-
 int addrparse(const char *addrstr, const char *portstr,
               struct sockaddr_storage *storage);
 

@@ -1,5 +1,7 @@
 #include "common.h"
 #include "handlers.h"
+#include "utils.h"
+#include "structure.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -152,7 +154,6 @@ int main(int argc, char **argv)
 
     // sets the current list of locations to length 0
     locs.currOccupancy = 0;
-    // TODO: initialize all array elements with -1 -1
 
     while (1)
     {

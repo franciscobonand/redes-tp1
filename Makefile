@@ -1,8 +1,9 @@
 all:
+	gcc -Wall -c utils.c
 	gcc -Wall -c common.c
 	gcc -Wall -c handlers.c
-	gcc -Wall client.c common.o -o client
-	gcc -Wall server.c common.o handlers.o -o server -lm
+	gcc -Wall client.c utils.o common.o -o client -lm
+	gcc -Wall server.c utils.o common.o handlers.o -o server -lm
 
 clean:
-	rm common.o handlers.o client server
+	rm utils.o common.o handlers.o client server
