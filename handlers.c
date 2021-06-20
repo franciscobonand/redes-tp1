@@ -151,7 +151,6 @@ void handleAdd(char *addCmd, struct Locations *loc, char *cmdReturn)
         loc->currOccupancy++;
 
         writeReturnMessage(coordX, coordY, "added", cmdReturn);
-        printf("msg in add: %s\n", cmdReturn);
         return;
     }
     sprintf(cmdReturn, "%s", "error");
@@ -184,8 +183,7 @@ void handleList(char *listCmd, struct Locations *loc, char *cmdReturn)
             if (i < loc->currOccupancy - 1)
                 strcat(list, " ");
         }
-        printf("list size: %ld\n", strlen(list));
-        printf("list: %s\n", list);
+
         sprintf(cmdReturn, "%s", list);
         return;
     }

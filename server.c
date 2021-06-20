@@ -83,7 +83,6 @@ int listenToClient(int csock)
                 }
 
                 sleep(1);
-                printf("cmdReturn: %s\n", cmdReturn);
                 sendResponse(csock, cmdReturn);
 
                 if (strcmp(cmdReturn, "error") == 0)
