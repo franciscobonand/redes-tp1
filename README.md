@@ -60,7 +60,9 @@ Primeiramente, é sabido que uma mensagem K enviada entre as estruturas do Clien
 
 A fim de lidar com essa questão e realizar o número exato de leituras necessárias (tanto por parte do Cliente quanto por parte do Servidor), todas as mensagens enviadas no sistema possuem um prefixo do tipo “número-”, onde esse número representa o tamanho da mensagem que está sendo enviada. Dessa forma, a estrutura que recebe a mensagem sabe exatamente o tamanho da informação que deve ser lida, e, portanto, pode realizar leituras até que tenha lido uma quantidade igual ao número informado pelo prefixo. Um exemplo de mensagem nesse formato:  
 
-`"29-add 123 123\nadd 321 321\nlist\n"`
+`"29-add 123 123\nadd 321 321\nlist\n"`  
+
+Além disso, para lidar com múltiplas mensagens enviadas na mesma chamada feita pelo Cliente, o Servidor deve enviar um retorno para cada uma das mensagens da chamada. Nesse caso, a fim de informar o Cliente que múltiplos retornos estão por vir, o Servidor primeiramente envia uma chamada que contém apenas a mensagem “b” (begin) para informar ao Cliente do início de uma série de retornos. Após isso, o Servidor envia cada uma das respostas e, depois de todas as respostas serem enviadas, o Servidor envia uma última mensagem “e” (end) para indicar o fim da série de requisições, sinalizando que o Cliente pode parar de esperar por respostas do Servidor.  
 
 ## Desafios
 Dentre os desafios encontrados durante a implementação do sistema Cliente-Servidor, como a solução descrita acima para o recebimento “parcelado” de mensagens, o que mais se destacou foi o tratamento dos comandos recebidos pelo Servidor, com o enfoque principalmente em casos que a mensagem enviada possui múltiplos comandos (como a mensagem ilustrada acima).
